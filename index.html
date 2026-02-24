@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>متابعة الختمة الجماعية</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
+    <style>
+        :root { --bg: #454545; --header: #1a252f; --gold: #f1c40f; --green: #2ecc71; --red: #e74c3c; }
+        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 15px; }
+        
+        .header { background: var(--header); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #34495e; position: relative; }
+        
+        .info-box { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.05); padding: 12px 20px; border-radius: 10px; border: 1px solid var(--gold); }
+        #gregorian { font-size: 1.1em; color: var(--gold); font-weight: bold; }
+
+        .fields { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 40px; }
+        .f-group { display: flex; flex-direction: column; align-items: center; font-size: 0.75em; }
+        .f-group input { padding: 6px; border-radius: 5px; border: none; text-align: center; width: 130px; margin-top: 4px; }
+
+        .monitor { width: 100%; height: 18px; background: var(--red); display: flex; margin: 15px 0; border-radius: 5px; overflow: hidden; }
+        .m-cell { flex: 1; height: 100%; border-left: 0.1px solid rgba(0,0,0,0.05); }
+        .m-cell.active { background: var(--green); }
+        .res-text { font-size: 1.3em; font-weight: bold; color: var(--green); text-align: center; }
+
+        .grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+        .card { background: #34495e; padding: 10px; border-radius: 8px; width: 280px; border: 1px solid #455a64; }
+        .rects { display: flex; background: var(--red); padding: 3px; border-radius: 5px; gap: 2px; }
+        .cell { flex: 1; height: 38px; background: rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; font-size: 9px; cursor: pointer; transition: 0.2s; }
+        .cell:hover { background: rgba(255,255,255,0.1); }
+        .cell.active { background: var(--green) !important; color: #1a252f; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="info-box"><div id="gregorian">--</div></div>
+    <div class="fields">
+        <div class="f-group"><label>النية</label><input type="text" id="niya"></div>
+        <div class="f-group"><label>تاريخ الختم</label><input type="date" id="dfin"></div>
+        <div class="f-group"><label>اسم القارئ (لتسجيل الورد)</label><input type="text" id="usr" value="قارئ"></div>
+    </div>
+    <div id="mon" class="monitor"></div>
+    <div class="res-text">المجموع: <span id="res">0</span></div>
+</div>
+
+<div id="g" class="grid"></div>
+
+<script>
+    // --- TES CODES FIREBASE CONFIGURÉS ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyD3wfpWiJprAJyajMbz9cxzPtiaTJwq2xE",
+        authDomain: "khatma-8a394.firebaseapp.com",
+        databaseURL: "https://khatma-8a394-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "khatma-8a394",
+        storageBucket: "khatma-8a394.firebasestorage.app",
+        messagingSenderId: "99722444250",
+        appId: "1:99722444250:web:82ac364641022f6e3194e3"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const labels = ["ثمن", "ربع", "ثمن", "نصف", "ثمن", "ربع", "ثمن", "الحزب"];
+
+    // Date actuelle
+    document.getElementById('gregorian').innerText = new Date().toLocaleDateString('ar-TN', {day:'numeric', month:'long', year:'numeric'});
+
+    // Écoute des données en temps réel
+    db.ref('khatma_share').on('value', (snapshot) => {
+        const val = snapshot.val() || { cells: {}, info: {niya: "", dfin: ""} };
+        renderPage(val);
+    });
+
+    // Action de cliquer sur une case
+    function toggleCell(idx) {
+        const user = document.getElementById('usr').value || "تم";
+        const cellRef = db.ref('khatma_share/cells/' + idx);
+        
+        cellRef.once('value').then((snap) => {
+            if (snap.exists()) {
+                cellRef.remove(); // Décoche
+            } else {
+                cellRef.set(user); // Coche avec le nom
+            }
+        });
+    }
+
+    // Sauvegarde des infos de l'en-tête
+    document.getElementById('niya').onchange = (e) => db.ref('khatma_share/info/niya').set(e.target.value);
+    document.getElementById('dfin').onchange = (e) => db.ref('khatma_share/info/dfin').set(e.target.value);
+
+    function renderPage(data) {
+        const cells = data.cells || {};
+        const info = data.info || {};
+        
+        document.getElementById('niya').value = info.niya || "";
+        document.getElementById('dfin').value = info.dfin || "";
+
+        const g = document.getElementById('g');
+        const mon = document.getElementById('mon');
+        g.innerHTML = ""; mon.innerHTML = "";
+        let count = 0;
+
+        // Barre de progression (Monitor)
+        for (let i=0; i<480; i++) {
+            const d = document.createElement('div');
+            d.className = 'm-cell' + (cells[i] ? ' active' : '');
+            mon.appendChild(d);
+            if(cells[i]) count++;
+        }
+
+        // Grille des 60 Hizbs
+        for (let i=1; i<=60; i++) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `<div style="text-align:center; color:var(--gold); margin-bottom:8px;">الحزب ${i}</div>`;
+            const r = document.createElement('div');
+            r.className = 'rects';
+            for (let j=0; j<8; j++) {
+                const idx = ((i-1)*8)+j;
+                const c = document.createElement('div');
+                c.className = 'cell' + (cells[idx] ? ' active' : '');
+                c.innerText = cells[idx] ? cells[idx] : labels[j];
+                c.onclick = () => toggleCell(idx);
+                r.appendChild(c);
+            }
+            card.appendChild(r);
+            g.appendChild(card);
+        }
+
+        // Calcul du total
+        let h = Math.floor(count/8), rem = count%8, res = [];
+        if(h>0) res.push(h+" حزب");
+        if(rem>0) res.push(rem + " أثمان");
+        document.getElementById('res').innerText = res.join(" و ") || "0";
+    }
+</script>
+</body>
+</html>
