@@ -13,25 +13,34 @@
         .screen { display: none; padding: 10px; min-height: 100vh; flex-direction: column; align-items: center; box-sizing: border-box; }
         .active { display: flex !important; }
         .card-ui { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid var(--gold); width: 100%; max-width: 400px; box-sizing: border-box; text-align: center; }
-        .salutation-center { color: var(--gold); font-size: 1.1em; margin-top: 70px; margin-bottom: 10px; font-weight: normal; text-align: center; width: 100%; }
-        .khatma-item { background: #34495e; padding: 15px; margin-bottom: 12px; border-radius: 10px; border-right: 5px solid var(--gold); text-align: right; cursor: pointer; }
-        .k-meta { font-size: 0.75em; color: #bdc3c7; margin-top: 5px; display: flex; justify-content: space-between; }
+        .salutation-center { color: var(--gold); font-size: 1.1em; margin-top: 70px; margin-bottom: 10px; text-align: center; width: 100%; }
+        
+        .khatma-item { background: #34495e; padding: 12px; margin-bottom: 12px; border-radius: 10px; border-right: 5px solid var(--gold); text-align: right; position: relative; cursor: pointer; overflow: hidden; }
+        .k-actions { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); display: flex; gap: 8px; z-index: 10; }
+        .btn-mini { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 6px; border-radius: 6px; cursor: pointer; font-size: 0.9em; line-height: 1; }
+        .btn-mini:hover { background: var(--gold); color: black; }
+        
+        .k-meta { font-size: 0.7em; color: #bdc3c7; margin-top: 5px; display: flex; justify-content: space-between; padding-left: 70px; }
         .footer-text { position: fixed; bottom: 10px; width: 100%; text-align: center; font-size: 0.65em; color: #aaa; left: 0; pointer-events: none; z-index: 100; }
+        
         select, input, button { padding: 12px; border-radius: 10px; border: none; width: 100%; margin: 8px 0; font-size: 1em; box-sizing: border-box; }
         .btn-gold { background: var(--gold); color: #1a252f; font-weight: bold; cursor: pointer; }
+        
         .sticky-header { position: fixed; top: 0; left: 0; right: 0; background: rgba(26, 37, 47, 0.98); backdrop-filter: blur(8px); z-index: 900; padding: 10px 12px 2px 12px; border-bottom: 2px solid var(--gold); }
         .monitor { width: 100%; height: 5px; background: var(--red); display: flex; margin: 5px 0; border-radius: 3px; overflow: hidden; }
         .m-cell { flex: 1; height: 100%; }
         .m-cell.active { background: var(--green); }
         .m-cell.reserved { background: var(--orange); }
+        
         #screen-app .grid { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 500px; padding-top: 110px; padding-bottom: 80px; }
         .k-card { background: #34495e; padding: 8px; border-radius: 10px; border: 1px solid #455a64; }
         .hizb-label { display: block; margin-bottom: 6px; color: var(--gold); font-size: 0.85em; text-align: center; cursor: pointer; text-decoration: underline; }
         .rects { display: flex; background: var(--red); padding: 2px; border-radius: 6px; gap: 2px; height: 50px; align-items: center; }
-        .cell { flex: 1; height: 100%; background: rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 2px; position: relative; overflow: hidden; }
+        .cell { flex: 1; height: 100%; background: rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 2px; position: relative; }
         .cell span { display: block; transform: rotate(-45deg); font-size: 8px; font-weight: bold; pointer-events: none; text-align: center; width: 140%; }
         .cell.active { background: var(--green) !important; color: #1a252f; }
         .cell.reserved { background: var(--orange) !important; color: white; }
+        
         .fab { position: fixed; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; color: white; cursor: pointer; z-index: 1500; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .btn-back { bottom: 15px; right: 15px; background: #7f8c8d; }
         .btn-mode { bottom: 15px; left: 15px; background: var(--orange); }
@@ -46,7 +55,7 @@
     <div class="card-ui">
         <h2 style="color:var(--gold); font-size: 1.1em;">مرحبا بك. عرف بنفسك</h2>
         <select id="user-select"><option value="">-- اسمك --</option><option>أمين</option><option>زهور</option><option>مهدي</option><option>Rosalie</option><option>الياس</option><option>منال</option><option>خليل</option><option>نور</option><option>يوسف</option><option>شهد</option></select>
-        <input type="password" id="user-pass" placeholder="كلمة المرور">
+        <input type="password" id="user-pass" placeholder="كلمة المرور" onkeypress="if(event.key==='Enter') login()">
         <button class="btn-gold" onclick="login()">دخول</button>
     </div>
 </div>
@@ -80,10 +89,10 @@
 
 <div id="modal-new" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;">
     <div class="card-ui" style="background:var(--header);">
-        <h4 style="color:var(--gold);">ختمة جديدة</h4>
+        <h4 id="modal-header-title" style="color:var(--gold);">ختمة جديدة</h4>
         <input type="text" id="k-title-input" placeholder="الموضوع">
         <input type="date" id="k-date-input">
-        <button class="btn-gold" onclick="saveKhatma()">تأكيد</button>
+        <button class="btn-gold" id="btn-save" onclick="saveKhatma()">تأكيد</button>
         <button style="background:transparent; color:#bbb;" onclick="closeModal()">إلغاء</button>
     </div>
 </div>
@@ -92,7 +101,7 @@
     const firebaseConfig = { apiKey: "AIzaSyD3wfpWiJprAJyajMbz9cxzPtiaTJwq2xE", authDomain: "khatma-8a394.firebaseapp.com", databaseURL: "https://khatma-8a394-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "khatma-8a394", appId: "1:99722444250:web:82ac364641022f6e3194e3" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    let currentUser = localStorage.getItem('khatma_user') || "", currentKhatmaId = "", isReserveMode = false;
+    let currentUser = localStorage.getItem('khatma_user') || "", currentKhatmaId = "", isReserveMode = false, editingId = null;
     const labels = ["ثمن", "ربع", "ثمن", "نصف", "ثمن", "ربع", "ثمن", "حزب"];
 
     function formatQuranicUnits(count) {
@@ -109,8 +118,42 @@
     function login() { const u = document.getElementById('user-select').value, p = document.getElementById('user-pass').value; if(u && p === "della2026") { currentUser = u; localStorage.setItem('khatma_user', u); initDashboard(); } else alert("خطأ"); }
     function initDashboard() { document.getElementById('header-user-name').innerText = currentUser; showScreen('screen-dashboard'); loadKhatmas(); }
     function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.getElementById('user-header-block').style.display = (id === 'screen-dashboard') ? 'block' : 'none'; }
-    function loadKhatmas() { db.ref('khatmas_multi').on('value', snap => { const cont = document.getElementById('khatmas-container'); cont.innerHTML = ""; const data = snap.val(); if(!data) return; Object.keys(data).reverse().forEach(id => { const k = data[id]; const item = document.createElement('div'); item.className = 'khatma-item'; item.innerHTML = `<strong>${k.info.title}</strong><div class="k-meta"><span>بواسطة: ${k.info.createdBy}</span><span>تاريخ: ${k.info.date}</span></div>`; item.onclick = () => openKhatma(id, k); cont.appendChild(item); }); }); }
-    function openKhatma(id, data) { currentKhatmaId = id; document.getElementById('current-k-title').innerText = data.info.title; document.getElementById('current-k-deadline').innerText = "موعدنا: " + data.info.date; db.ref('khatmas_multi/' + id + '/cells').on('value', snap => renderGrid(snap.val() || {})); showScreen('screen-app'); }
+    
+    function loadKhatmas() {
+        db.ref('khatmas_multi').on('value', snap => {
+            const cont = document.getElementById('khatmas-container'); cont.innerHTML = "";
+            const data = snap.val(); if(!data) return;
+            Object.keys(data).reverse().forEach(id => {
+                const k = data[id];
+                const item = document.createElement('div'); item.className = 'khatma-item';
+                
+                let actionsHtml = "";
+                if (currentUser === "الياس" || currentUser === k.info.createdBy) {
+                    actionsHtml = `<div class="k-actions">
+                        <button class="btn-mini" onclick="event.stopPropagation(); editKhatmaPrompt('${id}', '${k.info.title}', '${k.info.date}')">✏️</button>
+                        <button class="btn-mini" onclick="event.stopPropagation(); deleteKhatma('${id}')">🗑️</button>
+                    </div>`;
+                }
+
+                item.innerHTML = `
+                    <div style="width:100%; height:100%">
+                        <strong>${k.info.title}</strong>
+                        <div class="k-meta"><span>بواسطة: ${k.info.createdBy}</span><span>تاريخ: ${k.info.date}</span></div>
+                    </div>
+                    ${actionsHtml}`;
+                
+                item.onclick = () => {
+                    currentKhatmaId = id;
+                    document.getElementById('current-k-title').innerText = k.info.title;
+                    document.getElementById('current-k-deadline').innerText = "موعدنا: " + k.info.date;
+                    db.ref('khatmas_multi/' + id + '/cells').on('value', cSnap => renderGrid(cSnap.val() || {}));
+                    showScreen('screen-app');
+                };
+
+                cont.appendChild(item);
+            });
+        });
+    }
 
     function renderGrid(cells) {
         const g = document.getElementById('g'), lb = document.getElementById('leaderboard-content'), mon = document.getElementById('mon');
@@ -162,9 +205,7 @@
                 if(isReserveMode) { if(val === "R_"+currentUser) myOwnCount++; }
                 else { if(val === currentUser) myOwnCount++; }
             }
-
             const isDeselectAction = (myOwnCount > 0);
-
             for(let i=0; i<8; i++){
                 const idx = start+i; const val = cells[idx]; const ref = db.ref(`khatmas_multi/${currentKhatmaId}/cells/${idx}`);
                 if(isReserveMode) {
@@ -178,14 +219,40 @@
         });
     }
 
+    function deleteKhatma(id) { if(confirm("هل أنت متأكد من حذف هذه الختمة نهائياً؟")) db.ref('khatmas_multi/'+id).remove(); }
+
+    function editKhatmaPrompt(id, title, date) {
+        editingId = id;
+        document.getElementById('modal-header-title').innerText = "تعديل الختمة";
+        document.getElementById('k-title-input').value = title;
+        document.getElementById('k-date-input').value = date;
+        showModal();
+    }
+
     function toggleLeaderboard(e) { e.stopPropagation(); const lb = document.getElementById('leaderboard-content'); const isOpen = lb.style.display === 'block'; lb.style.display = isOpen ? 'none' : 'block'; document.getElementById('g').classList.toggle('pushed', !isOpen); document.getElementById('arrow-btn').innerText = isOpen ? "▼" : "▲"; }
     function closeLBIfOpen() { const lb = document.getElementById('leaderboard-content'); if(lb.style.display === 'block') { lb.style.display = 'none'; document.getElementById('g').classList.remove('pushed'); document.getElementById('arrow-btn').innerText = "▼"; } }
     function toggleReserveMode() { isReserveMode = !isReserveMode; const b = document.getElementById('btn-mode'); b.innerText = isReserveMode ? "📖" : "📋"; b.classList.toggle('reading', isReserveMode); }
     function logout() { if(confirm("خروج؟")) { localStorage.removeItem('khatma_user'); location.reload(); } }
     function exitKhatma() { showScreen('screen-dashboard'); }
     function showModal() { document.getElementById('modal-new').style.display = 'flex'; }
-    function closeModal() { document.getElementById('modal-new').style.display = 'none'; }
-    function saveKhatma() { const t = document.getElementById('k-title-input').value, d = document.getElementById('k-date-input').value; if(t && d) db.ref('khatmas_multi').push().set({ info: {title:t, date:d, createdBy:currentUser, timestamp:Date.now()}, cells: {} }).then(closeModal); }
+    function closeModal() { 
+        document.getElementById('modal-new').style.display = 'none'; 
+        editingId = null; 
+        document.getElementById('modal-header-title').innerText = "ختمة جديدة";
+        document.getElementById('k-title-input').value = "";
+        document.getElementById('k-date-input').value = "";
+    }
+    
+    function saveKhatma() {
+        const t = document.getElementById('k-title-input').value, d = document.getElementById('k-date-input').value;
+        if(t && d) {
+            if(editingId) {
+                db.ref('khatmas_multi/'+editingId+'/info').update({title:t, date:d}).then(closeModal);
+            } else {
+                db.ref('khatmas_multi').push().set({ info: {title:t, date:d, createdBy:currentUser, timestamp:Date.now()}, cells: {} }).then(closeModal);
+            }
+        }
+    }
 </script>
 </body>
 </html>
