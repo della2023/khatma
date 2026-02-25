@@ -3,208 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ختمة العائلة</title>
+    <title>تطبيق الختمة الجماعية</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    
     <style>
-        :root { --bg: #2c3e50; --gold: #f1c40f; --green: #27ae60; --red: #c0392b; --orange: #d35400; --card: #34495e; }
-        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: white; margin: 0; padding: 0; }
-
-        /* Interface Connexion / Dashboard */
-        .screen { display: none; padding: 15px; min-height: 100vh; flex-direction: column; align-items: center; box-sizing: border-box; }
+        :root { --bg: #454545; --header: #1a252f; --gold: #f1c40f; --green: #2ecc71; --red: #e74c3c; --orange: #e67e22; }
+        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; overflow-x: hidden; min-height: 100vh; position: relative; }
+        .user-header-top { position: fixed; top: 10px; right: 10px; z-index: 1100; display: none; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; border: 1px solid var(--gold); font-size: 0.85em; cursor: pointer; }
+        .screen { display: none; padding: 10px; min-height: 100vh; flex-direction: column; align-items: center; box-sizing: border-box; }
         .active { display: flex !important; }
-        .card-ui { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 15px; border: 1px solid var(--gold); width: 100%; max-width: 400px; margin-top: 50px; }
-        
-        select, input, button { padding: 15px; border-radius: 10px; border: none; width: 100%; margin: 8px 0; font-size: 16px; box-sizing: border-box; }
-        .btn-gold { background: var(--gold); color: #2c3e50; font-weight: bold; }
-
-        /* Header Fixe Mobile */
-        .mobile-header {
-            position: fixed; top: 0; left: 0; right: 0;
-            background: #1a252f; z-index: 1000;
-            padding: 10px 15px; border-bottom: 2px solid var(--gold);
-            display: flex; flex-direction: column; gap: 5px;
-        }
-        .header-top { display: flex; justify-content: space-between; align-items: center; }
-        .prog-text { font-size: 0.85em; font-weight: bold; color: var(--green); }
-        
-        .monitor { width: 100%; height: 8px; background: var(--red); display: flex; border-radius: 4px; overflow: hidden; margin-top: 5px; }
+        .card-ui { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid var(--gold); width: 100%; max-width: 400px; box-sizing: border-box; text-align: center; }
+        .salutation-center { color: var(--gold); font-size: 1.1em; margin-top: 70px; margin-bottom: 10px; font-weight: normal; text-align: center; width: 100%; }
+        .khatma-item { background: #34495e; padding: 15px; margin-bottom: 12px; border-radius: 10px; border-right: 5px solid var(--gold); text-align: right; cursor: pointer; }
+        .k-meta { font-size: 0.75em; color: #bdc3c7; margin-top: 5px; display: flex; justify-content: space-between; }
+        .footer-text { position: fixed; bottom: 10px; width: 100%; text-align: center; font-size: 0.65em; color: #aaa; left: 0; pointer-events: none; z-index: 100; }
+        select, input, button { padding: 12px; border-radius: 10px; border: none; width: 100%; margin: 8px 0; font-size: 1em; box-sizing: border-box; }
+        .btn-gold { background: var(--gold); color: #1a252f; font-weight: bold; cursor: pointer; }
+        .sticky-header { position: fixed; top: 0; left: 0; right: 0; background: rgba(26, 37, 47, 0.98); backdrop-filter: blur(8px); z-index: 900; padding: 10px 12px 2px 12px; border-bottom: 2px solid var(--gold); }
+        .monitor { width: 100%; height: 5px; background: var(--red); display: flex; margin: 5px 0; border-radius: 3px; overflow: hidden; }
         .m-cell { flex: 1; height: 100%; }
         .m-cell.active { background: var(--green); }
         .m-cell.reserved { background: var(--orange); }
-
-        /* Grille Mobile */
-        .grid-mobile { width: 100%; padding-top: 130px; padding-bottom: 20px; display: flex; flex-direction: column; gap: 12px; }
-        .hizb-card { background: var(--card); border-radius: 10px; padding: 10px; border: 1px solid #455a64; }
-        .hizb-card strong { display: block; text-align: center; margin-bottom: 10px; color: var(--gold); font-size: 0.9em; }
-        
-        .row-thumn { display: flex; gap: 3px; background: var(--red); padding: 2px; border-radius: 5px; }
-        .cell { 
-            flex: 1; height: 50px; background: rgba(0,0,0,0.3); 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 10px; border-radius: 3px; cursor: pointer;
-        }
-        .cell.active { background: var(--green) !important; font-weight: bold; }
-        .cell.reserved { background: var(--orange) !important; font-weight: bold; }
-
-        /* Boutons d'action flottants */
-        .back-btn { background: #7f8c8d; color: white; padding: 5px 15px; border-radius: 5px; font-size: 0.8em; font-weight: bold; width: auto; margin: 0; }
-        .reserve-toggle { background: var(--orange); color: white; padding: 10px; border-radius: 50px; position: fixed; bottom: 20px; left: 20px; width: 60px; height: 60px; z-index: 1100; box-shadow: 0 4px 10px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 0.7em; font-weight: bold; text-align: center; line-height: 1; }
+        #screen-app .grid { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 500px; padding-top: 110px; padding-bottom: 80px; }
+        .k-card { background: #34495e; padding: 8px; border-radius: 10px; border: 1px solid #455a64; }
+        .hizb-label { display: block; margin-bottom: 6px; color: var(--gold); font-size: 0.85em; text-align: center; cursor: pointer; text-decoration: underline; }
+        .rects { display: flex; background: var(--red); padding: 2px; border-radius: 6px; gap: 2px; height: 50px; align-items: center; }
+        .cell { flex: 1; height: 100%; background: rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 2px; position: relative; overflow: hidden; }
+        .cell span { display: block; transform: rotate(-45deg); font-size: 8px; font-weight: bold; pointer-events: none; text-align: center; width: 140%; }
+        .cell.active { background: var(--green) !important; color: #1a252f; }
+        .cell.reserved { background: var(--orange) !important; color: white; }
+        .fab { position: fixed; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; color: white; cursor: pointer; z-index: 1500; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .btn-back { bottom: 15px; right: 15px; background: #7f8c8d; }
+        .btn-mode { bottom: 15px; left: 15px; background: var(--orange); }
+        .btn-mode.reading { background: var(--green); }
     </style>
 </head>
-<body>
+<body onclick="closeLBIfOpen()">
+
+<div id="user-header-block" class="user-header-top" onclick="logout()">👤 <span id="header-user-name"></span></div>
 
 <div id="screen-login" class="screen active" style="justify-content: center;">
     <div class="card-ui">
-        <h2 style="text-align:center; color:var(--gold);">دخول العائلة</h2>
-        <select id="user-select">
-            <option value="">-- اختر اسمك --</option>
-            <option>أمين</option><option>زهور</option><option>مهدي</option>
-            <option>Rosalie</option><option>الياس</option><option>منال</option>
-            <option>خليل</option><option>نور</option><option>يوسف</option><option>شهد</option>
-        </select>
+        <h2 style="color:var(--gold); font-size: 1.1em;">مرحبا بك. عرف بنفسك</h2>
+        <select id="user-select"><option value="">-- اسمك --</option><option>أمين</option><option>زهور</option><option>مهدي</option><option>Rosalie</option><option>الياس</option><option>منال</option><option>خليل</option><option>نور</option><option>يوسف</option><option>شهد</option></select>
         <input type="password" id="user-pass" placeholder="كلمة المرور">
         <button class="btn-gold" onclick="login()">دخول</button>
     </div>
 </div>
 
 <div id="screen-dashboard" class="screen">
-    <div class="card-ui" style="margin-top: 20px;">
+    <div class="salutation-center">السلام عليكم و رحمة الله و بركاته</div>
+    <div class="card-ui">
         <button class="btn-gold" onclick="showModal()">+ إضافة ختمة جديدة</button>
-        <div id="khatmas-container" style="margin-top: 15px;"></div>
+        <div id="khatmas-container" style="margin-top:20px;"></div>
     </div>
+    <div class="footer-text">جميع الحقوق محفوظة بإذن الله</div>
 </div>
 
 <div id="screen-app" class="screen">
-    <div class="mobile-header">
-        <div class="header-top">
-            <button class="back-btn" onclick="exit()">عودة</button>
-            <div id="k-title-display" style="color:var(--gold); font-weight:bold; font-size:0.9em;"></div>
-            <div id="res-percent" class="prog-text">0%</div>
+    <button class="fab btn-back" onclick="exitKhatma()">➔</button>
+    <button id="btn-mode" class="fab btn-mode" onclick="toggleReserveMode()">📋</button>
+    <div class="sticky-header" id="main-header" onclick="event.stopPropagation()">
+        <div style="max-width:500px; margin:0 auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div><h4 id="current-k-title" style="margin:0; color:var(--gold); font-size:0.85em;"></h4><span id="current-k-deadline" style="font-size:0.6em; color:#ccc;"></span></div>
+                <div style="font-weight:bold; font-size:0.7em; color:var(--green);"><span id="global-pct" style="color:var(--gold);">0%</span> | <span id="total-quran-text"></span></div>
+            </div>
+            <div id="mon" class="monitor"></div>
+            <button style="background:none; border:none; color:var(--gold); width:100%; cursor:pointer; height:20px;" onclick="toggleLeaderboard(event)" id="arrow-btn">▼</button>
+            <div id="leaderboard-content" style="display:none; padding:8px; font-size:0.75em; background:rgba(255,255,255,0.05); border-radius:8px;"></div>
         </div>
-        <div id="mon" class="monitor"></div>
     </div>
-
-    <div id="g" class="grid-mobile"></div>
-    
-    <div id="btn-reserve" class="reserve-toggle" onclick="toggleReserve()">وضع<br>الحجز</div>
+    <div id="g" class="grid"></div>
+    <div class="footer-text">جميع الحقوق محفوظة بإذن الله</div>
 </div>
 
-<div id="modal-new" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; align-items:center; justify-content:center;">
-    <div class="card-ui" style="background:var(--card);">
-        <h3 style="margin-top:0;">ختمة جديدة</h3>
-        <input type="text" id="k-title" placeholder="عنوان الختمة">
-        <button class="btn-gold" onclick="create()">تأكيد</button>
+<div id="modal-new" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;">
+    <div class="card-ui" style="background:var(--header);">
+        <h4 style="color:var(--gold);">ختمة جديدة</h4>
+        <input type="text" id="k-title-input" placeholder="الموضوع">
+        <input type="date" id="k-date-input">
+        <button class="btn-gold" onclick="saveKhatma()">تأكيد</button>
         <button style="background:transparent; color:#bbb;" onclick="closeModal()">إلغاء</button>
     </div>
 </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyD3wfpWiJprAJyajMbz9cxzPtiaTJwq2xE",
-        authDomain: "khatma-8a394.firebaseapp.com",
-        databaseURL: "https://khatma-8a394-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "khatma-8a394",
-        appId: "1:99722444250:web:82ac364641022f6e3194e3"
-    };
-    firebase.initializeApp(firebaseConfig);
+    const firebaseConfig = { apiKey: "AIzaSyD3wfpWiJprAJyajMbz9cxzPtiaTJwq2xE", authDomain: "khatma-8a394.firebaseapp.com", databaseURL: "https://khatma-8a394-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "khatma-8a394", appId: "1:99722444250:web:82ac364641022f6e3194e3" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    let currentUser = localStorage.getItem('khatma_user') || "", currentKhatmaId = "", isReserveMode = false;
+    const labels = ["ثمن", "ربع", "ثمن", "نصف", "ثمن", "ربع", "ثمن", "حزب"];
 
-    let currentUser = localStorage.getItem('khatma_user') || "";
-    let currentKId = "";
-    let isReserve = false;
-    const labels = ["ث", "ر", "ث", "ن", "ث", "ر", "ث", "ح"];
-
-    if(currentUser) initDash();
-
-    function login() {
-        const u = document.getElementById('user-select').value;
-        if(u && document.getElementById('user-pass').value === "della2026") {
-            currentUser = u; localStorage.setItem('khatma_user', u); initDash();
-        } else alert("خطأ");
+    function formatQuranicUnits(count) {
+        if (count === 0) return "0 ثمن";
+        let h = Math.floor(count / 8), r = count % 8;
+        const th = { 1: "ثمن", 2: "ربع", 3: "ثلاثة أثمان", 4: "نصف", 5: "نصف وثمن", 6: "نصف وربع", 7: "حزب إلا ثمن" };
+        let res = "";
+        if (h > 0) res = (h === 1) ? "حزب" : (h === 2) ? "حزبين" : h + (h <= 10 ? " أحزاب" : " حزباً");
+        if (r > 0) res += (res === "" ? "" : " و ") + th[r];
+        return res;
     }
 
-    function initDash() {
-        showScreen('screen-dashboard');
-        db.ref('khatmas_multi').on('value', snap => {
-            const cont = document.getElementById('khatmas-container');
-            cont.innerHTML = "";
-            const data = snap.val();
-            if(!data) return;
-            Object.keys(data).reverse().forEach(id => {
-                const k = data[id];
-                const d = document.createElement('div');
-                d.className = 'card-ui'; d.style.marginTop = "10px";
-                d.innerHTML = `<strong>${k.info.title}</strong><br><small>بواسطة: ${k.info.createdBy}</small>`;
-                d.onclick = () => openK(id, k);
-                cont.appendChild(d);
-            });
-        });
-    }
+    window.onload = () => { if(currentUser) initDashboard(); };
+    function login() { const u = document.getElementById('user-select').value, p = document.getElementById('user-pass').value; if(u && p === "della2026") { currentUser = u; localStorage.setItem('khatma_user', u); initDashboard(); } else alert("خطأ"); }
+    function initDashboard() { document.getElementById('header-user-name').innerText = currentUser; showScreen('screen-dashboard'); loadKhatmas(); }
+    function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.getElementById('user-header-block').style.display = (id === 'screen-dashboard') ? 'block' : 'none'; }
+    function loadKhatmas() { db.ref('khatmas_multi').on('value', snap => { const cont = document.getElementById('khatmas-container'); cont.innerHTML = ""; const data = snap.val(); if(!data) return; Object.keys(data).reverse().forEach(id => { const k = data[id]; const item = document.createElement('div'); item.className = 'khatma-item'; item.innerHTML = `<strong>${k.info.title}</strong><div class="k-meta"><span>بواسطة: ${k.info.createdBy}</span><span>تاريخ: ${k.info.date}</span></div>`; item.onclick = () => openKhatma(id, k); cont.appendChild(item); }); }); }
+    function openKhatma(id, data) { currentKhatmaId = id; document.getElementById('current-k-title').innerText = data.info.title; document.getElementById('current-k-deadline').innerText = "موعدنا: " + data.info.date; db.ref('khatmas_multi/' + id + '/cells').on('value', snap => renderGrid(snap.val() || {})); showScreen('screen-app'); }
 
-    function openK(id, data) {
-        currentKId = id;
-        document.getElementById('k-title-display').innerText = data.info.title;
-        db.ref('khatmas_multi/'+id+'/cells').on('value', snap => render(snap.val() || {}));
-        showScreen('screen-app');
-    }
-
-    function render(cells) {
-        const g = document.getElementById('g'); const mon = document.getElementById('mon');
-        g.innerHTML = ""; mon.innerHTML = "";
-        let count = 0;
-
-        for(let i=0; i<480; i++) {
+    function renderGrid(cells) {
+        const g = document.getElementById('g'), lb = document.getElementById('leaderboard-content'), mon = document.getElementById('mon');
+        g.innerHTML = ""; mon.innerHTML = ""; lb.innerHTML = "";
+        let count = 0, stats = {};
+        for (let i=0; i<480; i++) {
             const val = cells[i]; let st = "";
-            if(val?.startsWith("R_")) st="reserved";
-            else if(val) { st="active"; count++; }
-            const d = document.createElement('div'); d.className = 'm-cell '+st; mon.appendChild(d);
+            if(val?.startsWith("R_")) st="reserved"; else if(val) { st="active"; count++; stats[val] = (stats[val]||0)+1; }
+            const d = document.createElement('div'); d.className = 'm-cell ' + st; mon.appendChild(d);
         }
-
-        document.getElementById('res-percent').innerText = Math.round((count/480)*100) + "%";
-
-        for(let i=1; i<=60; i++) {
-            const card = document.createElement('div'); card.className = 'hizb-card';
-            card.innerHTML = `<strong>الحزب ${i}</strong>`;
-            const row = document.createElement('div'); row.className = 'row-thumn';
-            for(let j=0; j<8; j++) {
-                const idx = (i-1)*8+j; const val = cells[idx];
+        Object.keys(stats).sort((a,b)=>stats[b]-stats[a]).forEach(u => { lb.innerHTML += `<div style="display:flex; justify-content:space-between; padding:2px 0;"><span>${u}</span><span>${formatQuranicUnits(stats[u])}</span></div>`; });
+        for (let i=1; i<=60; i++) {
+            const card = document.createElement('div'); card.className = 'k-card';
+            card.innerHTML = `<strong class="hizb-label" onclick="selectHizb(${i})">الحزب ${i}</strong>`;
+            const row = document.createElement('div'); row.className = 'rects';
+            for (let j=0; j<8; j++) {
+                const idx = (i-1)*8+j, val = cells[idx];
                 const c = document.createElement('div'); c.className = 'cell';
                 let txt = labels[j];
-                if(val?.startsWith("R_")) { c.classList.add('reserved'); txt = val.replace("R_","").substring(0,2); }
-                else if(val) { c.classList.add('active'); txt = val.substring(0,2); }
-                c.innerText = txt;
-                c.onclick = () => {
-                    const ref = db.ref('khatmas_multi/'+currentKId+'/cells/'+idx);
-                    if(isReserve) { val==="R_"+currentUser ? ref.remove() : ref.set("R_"+currentUser); }
-                    else { (val && !val.startsWith("R_")) ? (val===currentUser && ref.remove()) : ref.set(currentUser); }
-                };
+                if(val?.startsWith("R_")) { c.classList.add('reserved'); txt = val.replace("R_","").substring(0,5); }
+                else if(val) { c.classList.add('active'); txt = val.substring(0,5); }
+                c.innerHTML = `<span>${txt}</span>`;
+                c.onclick = (e) => { e.stopPropagation(); handleCellClick(idx, val); };
                 row.appendChild(c);
             }
             card.appendChild(row); g.appendChild(card);
         }
+        document.getElementById('global-pct').innerText = Math.round((count/480)*100) + "%";
+        document.getElementById('total-quran-text').innerText = formatQuranicUnits(count);
     }
 
-    function toggleReserve() {
-        isReserve = !isReserve;
-        const btn = document.getElementById('btn-reserve');
-        btn.style.background = isReserve ? "var(--green)" : "var(--orange)";
-        btn.innerHTML = isReserve ? "وضع<br>القراءة" : "وضع<br>الحجز";
+    function handleCellClick(idx, val) {
+        closeLBIfOpen();
+        const ref = db.ref(`khatmas_multi/${currentKhatmaId}/cells/${idx}`);
+        if(isReserveMode) {
+            if(val === "R_"+currentUser) ref.remove(); else if(!val) ref.set("R_"+currentUser);
+        } else {
+            if(val === currentUser) ref.remove(); else if(!val || val.startsWith("R_")) ref.set(currentUser);
+        }
     }
 
-    function showScreen(id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        window.scrollTo(0,0);
+    function selectHizb(hNum) {
+        const start = (hNum-1)*8;
+        db.ref(`khatmas_multi/${currentKhatmaId}/cells`).once('value', snap => {
+            const cells = snap.val() || {};
+            let myOwnCount = 0;
+            for(let i=0; i<8; i++){
+                const val = cells[start+i];
+                if(isReserveMode) { if(val === "R_"+currentUser) myOwnCount++; }
+                else { if(val === currentUser) myOwnCount++; }
+            }
+
+            const isDeselectAction = (myOwnCount > 0);
+
+            for(let i=0; i<8; i++){
+                const idx = start+i; const val = cells[idx]; const ref = db.ref(`khatmas_multi/${currentKhatmaId}/cells/${idx}`);
+                if(isReserveMode) {
+                    if(val === "R_"+currentUser) ref.remove(); 
+                    else if(!val && !isDeselectAction) ref.set("R_"+currentUser);
+                } else {
+                    if(val === currentUser) ref.remove();
+                    else if(!isDeselectAction && (!val || val.startsWith("R_"))) ref.set(currentUser);
+                }
+            }
+        });
     }
-    function exit() { showScreen('screen-dashboard'); }
-    function showModal() { document.getElementById('modal-new').style.display='flex'; }
-    function closeModal() { document.getElementById('modal-new').style.display='none'; }
-    function create() {
-        const t = document.getElementById('k-title').value;
-        if(t) db.ref('khatmas_multi').push().set({info:{title:t, createdBy:currentUser, timestamp:Date.now()}, cells:{}}).then(closeModal);
-    }
+
+    function toggleLeaderboard(e) { e.stopPropagation(); const lb = document.getElementById('leaderboard-content'); const isOpen = lb.style.display === 'block'; lb.style.display = isOpen ? 'none' : 'block'; document.getElementById('g').classList.toggle('pushed', !isOpen); document.getElementById('arrow-btn').innerText = isOpen ? "▼" : "▲"; }
+    function closeLBIfOpen() { const lb = document.getElementById('leaderboard-content'); if(lb.style.display === 'block') { lb.style.display = 'none'; document.getElementById('g').classList.remove('pushed'); document.getElementById('arrow-btn').innerText = "▼"; } }
+    function toggleReserveMode() { isReserveMode = !isReserveMode; const b = document.getElementById('btn-mode'); b.innerText = isReserveMode ? "📖" : "📋"; b.classList.toggle('reading', isReserveMode); }
+    function logout() { if(confirm("خروج؟")) { localStorage.removeItem('khatma_user'); location.reload(); } }
+    function exitKhatma() { showScreen('screen-dashboard'); }
+    function showModal() { document.getElementById('modal-new').style.display = 'flex'; }
+    function closeModal() { document.getElementById('modal-new').style.display = 'none'; }
+    function saveKhatma() { const t = document.getElementById('k-title-input').value, d = document.getElementById('k-date-input').value; if(t && d) db.ref('khatmas_multi').push().set({ info: {title:t, date:d, createdBy:currentUser, timestamp:Date.now()}, cells: {} }).then(closeModal); }
 </script>
 </body>
 </html>
